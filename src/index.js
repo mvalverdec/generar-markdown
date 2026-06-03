@@ -3,6 +3,7 @@
 const { program } = require('commander');
 const { convertFile } = require('./converter');
 const { pickFile } = require('./picker');
+const { scanEntrada } = require('./scanner');
 
 program
   .name('generar-markdown')
@@ -12,12 +13,19 @@ program
 program
   .command('convert [filepath]')
   .alias('c')
-  .description('Convierte un archivo a Markdown')
-  .option('-o, --output <path>', 'Ruta de salida del archivo .md')
+  .description('Convierte un archivo a Markdown. Sin argumentos, procesa todos los archivos de ./entrada')
+  .option('-o, --output <path>', 'Ruta de salida del archivo .md (solo aplica si se pasa un archivo)')
   .action(async (filepath, options) => {
-    const targetFile = filepath || (await pickFile());
-    if (!targetFile) process.exit(0);
-    await convertFile(targetFile, options.output);
+    if (filepath) {
+      await convertFile(filepath, options.output);
+      return;
+    }
+
+    const files = scanEntrada();
+    if (files.length === 0) process.exit(0);
+    for (const file of files) {
+      await convertFile(file);
+    }
   });
 
 program
